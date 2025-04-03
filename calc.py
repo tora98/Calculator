@@ -1,4 +1,5 @@
-# TODO:Adding a Number after comma does not work
+# Operations does not work except multiplication
+# Try to output 2 decimal places only
 import tkinter as tk
 from tkinter import ttk
 
@@ -310,9 +311,9 @@ class Calc(ttk.Frame):
 
     def clear(self):
         self.entry.delete(0, 'end')
-        self.isnumber()
+        self.is_number()
 
-    def isnumber(self):
+    def is_number(self):
         value_get = self.entry.get()
         if value_get == '':
             self.entry.insert(0, '0')
@@ -324,20 +325,27 @@ class Calc(ttk.Frame):
             except ValueError:
                 return False
 
-    def iszero(self):
+    def is_zero(self):
         value_get = self.entry.get()
-        if value_get == '0' or value_get[0] == '0':
+        if value_get == '0':
             return True
         else:
             return False
+
+    def has_decimal(self):
+        get_value = self.entry.get()
+        for letter in get_value:
+            if letter == '.':
+                return True
+        return False
 
     def err(self):
         self.delete()
         self.entry.insert(0, 'ERROR!')
 
     def insert1(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             return
         if iszero:
@@ -345,8 +353,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '1')
 
     def insert2(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -354,8 +362,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '2')
 
     def insert3(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -363,8 +371,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '3')
 
     def insert4(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -372,8 +380,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '4')
 
     def insert5(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -381,8 +389,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '5')
 
     def insert6(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -390,8 +398,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '6')
 
     def insert7(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -399,8 +407,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '7')
 
     def insert8(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -408,8 +416,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '8')
 
     def insert9(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -417,8 +425,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '9')
 
     def insert0(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -426,8 +434,8 @@ class Calc(ttk.Frame):
         self.entry.insert(tk.END, '0')
 
     def insert00(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             pass
         if iszero:
@@ -436,8 +444,8 @@ class Calc(ttk.Frame):
 
 # Awaiting Logic From isnumber Function
     def negate(self):
-        valid = self.isnumber()
-        iszero = self.iszero()
+        valid = self.is_number()
+        iszero = self.is_zero()
         if not valid:
             return
         if iszero:
@@ -455,18 +463,10 @@ class Calc(ttk.Frame):
         self.entry.insert(0, result)
 
     def insert_decimal(self):
-        get_value = self.entry.get()
-        comma = False
-        if get_value == '':
+        has_decimal = self.has_decimal()
+        if has_decimal:
             return
-        for letter in get_value:
-            if letter == '.':
-                comma = True
-                break
-        if comma:
-            return
-        else:
-            self.entry.insert(tk.END, '.')
+        self.entry.insert(tk.END, '.')
 
     def back(self):
         value_get = self.entry.get()
@@ -474,61 +474,68 @@ class Calc(ttk.Frame):
         self.entry.delete(length-1, 'end')
 
     def multiply(self):
-        valid = self.isnumber()
+        valid = self.is_number()
         if not valid:
             return
-        self.value1 = int(self.entry.get())
+        self.value1 = float(self.entry.get())
         self.operation = 'multiplication'
         self.clear()
 
     def divide(self):
-        valid = self.isnumber()
+        valid = self.is_number()
         if not valid:
             return
-        self.value1 = int(self.entry.get())
+        self.value1 = float(self.entry.get())
         self.operation = 'division'
         self.clear()
 
     def subtract(self):
-        valid = self.isnumber()
+        valid = self.is_number()
         if not valid:
             return
-        self.value1 = int(self.entry.get())
+        self.value1 = float(self.entry.get())
         self.operation = 'subtraction'
         self.clear()
 
     def add(self):
-        valid = self.isnumber()
+        valid = self.is_number()
         if not valid:
             return
-        self.value1 = int(self.entry.get())
+        self.value1 = float(self.entry.get())
         self.operation = 'addition'
         self.clear()
 
+    def var_type(self, number):
+        if number % 1 == 0:
+            return int(number)
+        return number
+
     def compute(self):
+        result = 0
+        valid = self.is_number()
+        iszero = self.is_zero()
         value_get = self.entry.get()
         self.value2 = float(value_get)
-        self.delete()
-        result = 0
+        if not valid:
+            self.delete()
+            self.entry.insert(tk.END, 'Err')
+            return
         if self.operation == 'multiplication':
             result = self.value1 * self.value2
-            self.delete()
-            self.entry.insert(0, str(result))
-
-        if self.operation == 'division':
-            if self.value2 == '0':
+        elif self.operation == 'division':
+            if iszero:
                 self.entry.insert(0, 'ERROR:ZERO DIVISION')
             else:
                 result = self.value1 / self.value2
-                self.entry.insert(0, str(result))
-
-        if self.operation == 'subtraction':
+        elif self.operation == 'subtraction':
             result = self.value1 - self.value2
-            self.entry.insert(0, str(result))
-
-        if self.operation == 'addition':
+        elif self.operation == 'addition':
             result = self.value1 + self.value2
-            self.entry.insert(0, str(result))
+        number = self.var_type(result)
+        self.delete()
+        self.entry.insert(0, str(number))
+        self.value1 = 0
+        self.value2 = 0
 
 
 if __name__ == "__main__":
