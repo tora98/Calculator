@@ -1,26 +1,15 @@
-# Operations does not work except multiplication
+# Pressing a number after a result should clear entry
 # Try to output 2 decimal places only
 import tkinter as tk
 from tkinter import ttk
 
 
 class Main(tk.Tk):
-    '''This is the main class of the app'''
-
     def __init__(self):
         super().__init__()
-        self.geometry("400x400")
-        self.minsize(width=400, height=400)
-        self.title("Calc")
-
-        self.show = Calc(self)
-
-        self.mainloop()
-
-
-class Calc(ttk.Frame):
-    def __init__(self, master):
-        super().__init__()
+        self.geometry("500x600")
+        self.minsize(width=500, height=600)
+        self.title("Calculator")
 
         self.columnconfigure((1, 2, 3, 4), weight=1, uniform='x')
         self.rowconfigure((1, 2, 3, 4, 5, 6), weight=1)
@@ -137,7 +126,7 @@ class Calc(ttk.Frame):
         self.btndivide = ttk.Button(
             self,
             text='/',
-            command=self.clear
+            command=self.divide
             )
         self.btndivide.grid(
             column=4,
@@ -189,7 +178,7 @@ class Calc(ttk.Frame):
         self.btnsubtract = ttk.Button(
             self,
             text='-',
-            command=self.clear
+            command=self.subtract
             )
         self.btnsubtract.grid(
             column=4,
@@ -241,7 +230,7 @@ class Calc(ttk.Frame):
         self.btnadd = ttk.Button(
             self,
             text='+',
-            command=self.clear
+            command=self.add
             )
         self.btnadd.grid(
             column=4,
@@ -304,7 +293,7 @@ class Calc(ttk.Frame):
             )
         self.entry.insert(tk.END, '0')
 
-        self.pack(expand=True, fill='both')
+        self.mainloop()
 
     def delete(self):
         self.entry.delete(0, 'end')
@@ -531,11 +520,10 @@ class Calc(ttk.Frame):
             result = self.value1 - self.value2
         elif self.operation == 'addition':
             result = self.value1 + self.value2
-        number = self.var_type(result)
+        self.value1 = self.var_type(result)
         self.delete()
-        self.entry.insert(0, str(number))
-        self.value1 = 0
         self.value2 = 0
+        self.entry.insert(0, str(self.value1))
 
 
 if __name__ == "__main__":
