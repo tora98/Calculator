@@ -1,51 +1,70 @@
 '''
-CALCULATOR CODE REVIEW SUGGESTIONS by CLAUDE
+Code Structure and Logic Improvements
 
-STRENGTHS:
-- Good use of grid layout for UI organization
-- Proper error handling for edge cases like division by zero
-- Comprehensive validation for number inputs
-- Clean separation of arithmetic operations
+Issue with is_number() function
 
-AREAS FOR IMPROVEMENT:
- 
-4. IMPROVE GUI ORGANIZATION
-   - Create separate methods for UI setup to make __init__ less crowded:
-   
-   def setup_ui(self):
-       self.setup_display()
-       self.setup_operation_buttons()
-       self.setup_number_buttons()
+The function is called in __init__ but doesn't return a value there, which is confusing
+It's used inconsistently - sometimes for validation, sometimes to initialize the display
 
-5. ENHANCE MEMORY MANAGEMENT
-   - Current design only supports one operation at a time
-   - Consider adding support for expression evaluation or operation chaining
 
-6. IMPROVE ERROR DISPLAY
-   - "ERROR!" message doesn't explain what went wrong
-   - Add more informative error messages for different error types
+Handle numbers after result calculation
 
-7. ADD KEYBOARD SUPPORT
-   - Add keyboard bindings for digits and operations:
+As your own comment suggests, pressing a number after a result should clear entry, but this isn't implemented
 
-   # Bind operation keys
-   self.bind('+', lambda event: self.add())
-   self.bind('-', lambda event: self.subtract())
-   # etc.
 
-8. ADD DOCUMENTATION
-   - Add docstrings to explain what each method does
-   - Example:
-   
-   def is_number(self):
-       """
-       Validates if the current entry is a valid number.
-       Returns True if valid, False otherwise.
-       Also inserts '0' if the entry is empty.
-       """
+Decimal handling
+
+Your own comment mentions "Try to output 2 decimal places only!" but this isn't implemented
+The has_decimal method is being checked conditionally in operation methods but not properly used
+
+
+Type checking inconsistency
+
+In operation methods (add, subtract, etc.), you check self.has_decimal but this is a method, not a property
+This condition likely never evaluates properly, causing inconsistent numeric type handling
+
+
+Zero division error handling
+
+In compute(), you check for zero division after setting self.value2, but you should check before the operation
+
+
+Unexpected state after computation
+
+After computation, you set self.operation = 'addition' which could lead to unexpected behavior if the user continues with more operations
+
+
+
+Performance and Best Practices
+
+Use string formatting for cleaner code
+
+Replace string concatenation with f-strings for better readability
+
+
+Avoid unnecessary operations
+
+In negate(), you're creating a result string character by character when you could use simpler logic
+
+
+Use constants for repeated values
+
+Define constants for repeated strings like operation names
+
+
+State management
+
+After computation, maintain a "result mode" flag to know when to clear the display for new input
+
+
+Input validation
+
+Implement more robust input validation, especially for decimal points and negative numbers
 '''
 # Pressing a number after a result should clear entry
-# Try to output 2 decimal places only
+# Try to output 2 decimal places only!
+# Learn more about storing values as integers
+# floats sometimes shoots itself
 import tkinter as tk
 from tkinter import ttk
 
@@ -54,6 +73,29 @@ class Main(tk.Tk):
 
     def __init__(self):
         super().__init__()
+
+        self.setup_display()
+        self.setup_buttons()
+
+        self.is_number()
+
+        # Bind Button presses for number keys
+        self.nums = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '00']
+        for digit in self.nums:
+            self.bind(digit, lambda event, d=digit: self.insert_digit(d))
+
+        # Binds for other buttons
+        self.bind('.', self.insert_decimal)
+        self.bind('+', self.add)
+        self.bind('-', self.subtract)
+        self.bind('/', self.divide)
+        self.bind('*', self.multiply)
+        self.bind('n', self.negate)
+        self.bind('<Delete>', self.clear)
+        self.bind('<BackSpace>', self.back)
+        self.bind('<Return>', self.compute)
+
+    def setup_display(self):
         self.geometry("500x600")
         self.minsize(width=500, height=600)
         self.title("Calculator")
@@ -67,6 +109,7 @@ class Main(tk.Tk):
         self.value2 = 0
         self.operation = ''
 
+    def setup_buttons(self):
         # Create list of key/value pairs to be used in creating number buttons
         self.digits = {
             '1': (3, 1), '2': (3, 2), '3': (3, 3),
@@ -116,16 +159,6 @@ class Main(tk.Tk):
                 command=lambda c=button: self.call_func(c)
                 ).grid(column=col, row=row, padx=5, pady=5, sticky='nsew')
 
-        # Bind Button presses for number keys
-        for digit in '0123456789':
-            self.bind(digit, lambda event, d=digit: self.insert_digit(d))
-
-        # Insert initial value of 0
-        self.is_number()
-
-        # Run the mainloop
-        self.mainloop()
-
     # Function for inserting the digits on the Entry Widget
     def insert_digit(self, digit, event=None):
         valid = self.is_number()
@@ -137,7 +170,7 @@ class Main(tk.Tk):
         self.entry.insert(tk.END, str(digit))
 
     # Function that validates the button press and calls associated function
-    def call_func(self, command):
+    def call_func(self, command, event=None):
         if command == 'C':
             self.clear()
         elif command == '<-':
@@ -158,11 +191,11 @@ class Main(tk.Tk):
             self.compute()
 
     # Deletes Entry Widget value
-    def delete(self):
+    def delete(self, event=None):
         self.entry.delete(0, 'end')
 
     # Delete Entry Value and inserts 0 as initial value
-    def clear(self):
+    def clear(self, event=None):
         self.delete()
         self.is_number()
 
@@ -203,7 +236,7 @@ class Main(tk.Tk):
         return False
 
     # Transforms entry value into a negative and back if pressed again
-    def negate(self):
+    def negate(self, event=None):
         valid = self.is_number()
         iszero = self.is_zero()
         if not valid:
@@ -213,8 +246,8 @@ class Main(tk.Tk):
         value_get = self.entry.get()
         result = '-'
         if value_get[0] == '-':
-            absolute = abs(float(value_get))
-            result = str(absolute)
+            val = self.var_type(abs(float(value_get)))
+            result = str(val)
         else:
             for letter in value_get:
                 result += letter
@@ -223,56 +256,68 @@ class Main(tk.Tk):
         self.entry.insert(0, result)
 
     # Inserts a decimal point if there is none yet returns if already present
-    def insert_decimal(self):
+    def insert_decimal(self, event=None):
         has_decimal = self.has_decimal()
         if has_decimal:
             return
         self.entry.insert(tk.END, '.')
 
     # Deletes the last character on the entry
-    def back(self):
+    def back(self, event=None):
         value_get = self.entry.get()
         length = len(value_get)
         self.entry.delete(length-1, 'end')
 
     # Sets value 1 and operation then preceeds to wait for the second value
-    def multiply(self):
+    def multiply(self, event=None):
         valid = self.is_number()
         if not valid:
             return
-        self.value1 = float(self.entry.get())
+        if self.has_decimal:
+            self.value1 = float(self.entry.get())
+        else:
+            self.value1 = int(self.entry.get())
         self.operation = 'multiplication'
         self.clear()
 
     # Sets value 1 and operation then preceeds to wait for the second value
-    def divide(self):
+    def divide(self, event=None):
         valid = self.is_number()
         if not valid:
             return
-        self.value1 = float(self.entry.get())
+        if self.has_decimal:
+            self.value1 = float(self.entry.get())
+        else:
+            self.value1 = int(self.entry.get())
         self.operation = 'division'
         self.clear()
 
     # Sets value 1 and operation then preceeds to wait for the second value
-    def subtract(self):
+    def subtract(self, event=None):
         valid = self.is_number()
         if not valid:
             return
-        self.value1 = float(self.entry.get())
+        if self.has_decimal:
+            self.value1 = float(self.entry.get())
+        else:
+            self.value1 = int(self.entry.get())
         self.operation = 'subtraction'
         self.clear()
 
     # Sets value 1 and operation then preceeds to wait for the second value
-    def add(self):
+    def add(self, event=None):
         valid = self.is_number()
         if not valid:
             return
-        self.value1 = float(self.entry.get())
+        if self.has_decimal:
+            self.value1 = float(self.entry.get())
+        else:
+            self.value1 = int(self.entry.get())
         self.operation = 'addition'
         self.clear()
 
     # Computes for the resulting value after accepting the second value for the operation
-    def compute(self):
+    def compute(self, event=None):
         result = 0
         valid = self.is_number()
         iszero = self.is_zero()
@@ -296,8 +341,10 @@ class Main(tk.Tk):
         self.value1 = self.var_type(result)
         self.delete()
         self.value2 = 0
+        self.operation = 'addition'
         self.entry.insert(0, str(self.value1))
 
 
 if __name__ == "__main__":
     show = Main()
+    show.mainloop()
