@@ -1,3 +1,49 @@
+'''
+CALCULATOR CODE REVIEW SUGGESTIONS by CLAUDE
+
+STRENGTHS:
+- Good use of grid layout for UI organization
+- Proper error handling for edge cases like division by zero
+- Comprehensive validation for number inputs
+- Clean separation of arithmetic operations
+
+AREAS FOR IMPROVEMENT:
+ 
+4. IMPROVE GUI ORGANIZATION
+   - Create separate methods for UI setup to make __init__ less crowded:
+   
+   def setup_ui(self):
+       self.setup_display()
+       self.setup_operation_buttons()
+       self.setup_number_buttons()
+
+5. ENHANCE MEMORY MANAGEMENT
+   - Current design only supports one operation at a time
+   - Consider adding support for expression evaluation or operation chaining
+
+6. IMPROVE ERROR DISPLAY
+   - "ERROR!" message doesn't explain what went wrong
+   - Add more informative error messages for different error types
+
+7. ADD KEYBOARD SUPPORT
+   - Add keyboard bindings for digits and operations:
+
+   # Bind operation keys
+   self.bind('+', lambda event: self.add())
+   self.bind('-', lambda event: self.subtract())
+   # etc.
+
+8. ADD DOCUMENTATION
+   - Add docstrings to explain what each method does
+   - Example:
+   
+   def is_number(self):
+       """
+       Validates if the current entry is a valid number.
+       Returns True if valid, False otherwise.
+       Also inserts '0' if the entry is empty.
+       """
+'''
 # Pressing a number after a result should clear entry
 # Try to output 2 decimal places only
 import tkinter as tk
@@ -5,24 +51,46 @@ from tkinter import ttk
 
 
 class Main(tk.Tk):
+
     def __init__(self):
         super().__init__()
         self.geometry("500x600")
         self.minsize(width=500, height=600)
         self.title("Calculator")
 
+        # Configure grid layout for the window
         self.columnconfigure((1, 2, 3, 4), weight=1, uniform='x')
         self.rowconfigure((1, 2, 3, 4, 5, 6), weight=1)
 
+        # Create global variables for storing values
         self.value1 = 0
         self.value2 = 0
         self.operation = ''
 
+        # Create list of key/value pairs to be used in creating number buttons
+        self.digits = {
+            '1': (3, 1), '2': (3, 2), '3': (3, 3),
+            '4': (4, 1), '5': (4, 2), '6': (4, 3),
+            '7': (5, 1), '8': (5, 2), '9': (5, 3),
+            '0': (6, 1), '00': (6, 2)
+        }
+
+        # Create a list of key/value pairs for creating operation and compute buttons
+        self.buttons = {
+            'C': (2, 1), '+/-': (2, 2), '<-': (2, 3), '*': (2, 4),
+                                                      '/': (3, 4),
+                                                      '-': (4, 4),
+                                                      '+': (5, 4),
+                                        '.': (6, 3), '=': (6, 4)
+        }
+
+        # Create an Entry Widget for Display
         self.entry = ttk.Entry(
             self,
             font=("Arial", 30),
             state='normal'
             )
+        # Grid the Entry Widget
         self.entry.grid(
             column=1,
             row=1,
@@ -32,277 +100,81 @@ class Main(tk.Tk):
             pady=5
             )
 
-        self.btnclear = ttk.Button(
-            self,
-            text='C',
-            command=self.clear
-            )
-        self.btnclear.grid(
-            column=1,
-            row=2,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
+        # Create number buttons and grid them on the window
+        for digit, (row, col) in self.digits.items():
+            ttk.Button(
+                self,
+                text=digit,
+                command=lambda d=digit: self.insert_digit(d)
+                ).grid(column=col, row=row, padx=5, pady=5, sticky='nsew')
 
-        self.btnnegate = ttk.Button(
-            self,
-            text='-/+',
-            command=self.negate
-            )
-        self.btnnegate.grid(
-            column=2,
-            row=2,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
+        # Create the other buttons and grid them on the window
+        for button, (row, col) in self.buttons.items():
+            ttk.Button(
+                self,
+                text=button,
+                command=lambda c=button: self.call_func(c)
+                ).grid(column=col, row=row, padx=5, pady=5, sticky='nsew')
 
-        self.btnback = ttk.Button(
-            self,
-            text='<-',
-            command=self.back
-            )
-        self.btnback.grid(
-            column=3,
-            row=2,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
+        # Bind Button presses for number keys
+        for digit in '0123456789':
+            self.bind(digit, lambda event, d=digit: self.insert_digit(d))
 
-        self.btnmultiply = ttk.Button(
-            self,
-            text='*',
-            command=self.multiply
-            )
-        self.btnmultiply.grid(
-            column=4,
-            row=2,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
+        # Insert initial value of 0
+        self.is_number()
 
-        self.btn1 = ttk.Button(
-            self,
-            text='1',
-            command=self.insert1
-            )
-        self.btn1.grid(
-            column=1,
-            row=3,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn2 = ttk.Button(
-            self,
-            text='2',
-            command=self.insert2
-            )
-        self.btn2.grid(
-            column=2,
-            row=3,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn3 = ttk.Button(
-            self,
-            text='3',
-            command=self.insert3
-            )
-        self.btn3.grid(
-            column=3,
-            row=3,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btndivide = ttk.Button(
-            self,
-            text='/',
-            command=self.divide
-            )
-        self.btndivide.grid(
-            column=4,
-            row=3,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn4 = ttk.Button(
-            self,
-            text='4',
-            command=self.insert4
-            )
-        self.btn4.grid(
-            column=1,
-            row=4,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn5 = ttk.Button(
-            self,
-            text='5',
-            command=self.insert5
-            )
-        self.btn5.grid(
-            column=2,
-            row=4,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn6 = ttk.Button(
-            self,
-            text='6',
-            command=self.insert6
-            )
-        self.btn6.grid(
-            column=3,
-            row=4,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btnsubtract = ttk.Button(
-            self,
-            text='-',
-            command=self.subtract
-            )
-        self.btnsubtract.grid(
-            column=4,
-            row=4,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn7 = ttk.Button(
-            self,
-            text='7',
-            command=self.insert7
-            )
-        self.btn7.grid(
-            column=1,
-            row=5,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn8 = ttk.Button(
-            self,
-            text='8',
-            command=self.insert8
-            )
-        self.btn8.grid(
-            column=2,
-            row=5,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn9 = ttk.Button(
-            self,
-            text='9',
-            command=self.insert9
-            )
-        self.btn9.grid(
-            column=3,
-            row=5,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btnadd = ttk.Button(
-            self,
-            text='+',
-            command=self.add
-            )
-        self.btnadd.grid(
-            column=4,
-            row=5,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn0 = ttk.Button(
-            self,
-            text='0',
-            command=self.insert0
-            )
-        self.btn0.grid(
-            column=1,
-            row=6,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btn00 = ttk.Button(
-            self,
-            text='00',
-            command=self.insert00
-            )
-        self.btn00.grid(
-            column=2,
-            row=6,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btndecimal = ttk.Button(
-            self,
-            text='.',
-            command=self.insert_decimal
-            )
-        self.btndecimal.grid(
-            column=3,
-            row=6,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-
-        self.btnecompute = ttk.Button(
-            self,
-            text='=',
-            command=self.compute
-            )
-        self.btnecompute.grid(
-            column=4,
-            row=6,
-            padx=5,
-            pady=5,
-            sticky='nsew'
-            )
-        self.entry.insert(tk.END, '0')
-
+        # Run the mainloop
         self.mainloop()
 
+    # Function for inserting the digits on the Entry Widget
+    def insert_digit(self, digit, event=None):
+        valid = self.is_number()
+        iszero = self.is_zero()
+        if not valid:
+            return
+        if iszero:
+            self.delete()
+        self.entry.insert(tk.END, str(digit))
+
+    # Function that validates the button press and calls associated function
+    def call_func(self, command):
+        if command == 'C':
+            self.clear()
+        elif command == '<-':
+            self.back()
+        elif command == '+/-':
+            self.negate()
+        elif command == '*':
+            self.multiply()
+        elif command == '/':
+            self.divide()
+        elif command == '-':
+            self.subtract()
+        elif command == '+':
+            self.add()
+        elif command == '.':
+            self.insert_decimal()
+        elif command == '=':
+            self.compute()
+
+    # Deletes Entry Widget value
     def delete(self):
         self.entry.delete(0, 'end')
 
+    # Delete Entry Value and inserts 0 as initial value
     def clear(self):
-        self.entry.delete(0, 'end')
+        self.delete()
         self.is_number()
 
-    def is_number(self):
+    # Checks then returns a value as a float or an int
+    def var_type(self, number):
+        if number % 1 == 0:
+            return int(number)
+        return number
+
+    # Validates Entry Value if viable number,
+    # sets initial value to 0 if blank
+    def is_number(self) -> bool:
         value_get = self.entry.get()
         if value_get == '':
             self.entry.insert(0, '0')
@@ -314,6 +186,7 @@ class Main(tk.Tk):
             except ValueError:
                 return False
 
+    # Checks if the current entry value is 0
     def is_zero(self):
         value_get = self.entry.get()
         if value_get == '0':
@@ -321,6 +194,7 @@ class Main(tk.Tk):
         else:
             return False
 
+    # Checks for a decimal point in the entry values
     def has_decimal(self):
         get_value = self.entry.get()
         for letter in get_value:
@@ -328,110 +202,7 @@ class Main(tk.Tk):
                 return True
         return False
 
-    def err(self):
-        self.delete()
-        self.entry.insert(0, 'ERROR!')
-
-    def insert1(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            return
-        if iszero:
-            self.delete()
-        self.entry.insert(tk.END, '1')
-
-    def insert2(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            self.delete()
-        self.entry.insert(tk.END, '2')
-
-    def insert3(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            self.delete()
-        self.entry.insert(tk.END, '3')
-
-    def insert4(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            self.delete()
-        self.entry.insert(tk.END, '4')
-
-    def insert5(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            self.delete()
-        self.entry.insert(tk.END, '5')
-
-    def insert6(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            self.delete()
-        self.entry.insert(tk.END, '6')
-
-    def insert7(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            self.delete()
-        self.entry.insert(tk.END, '7')
-
-    def insert8(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            self.delete()
-        self.entry.insert(tk.END, '8')
-
-    def insert9(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            self.delete()
-        self.entry.insert(tk.END, '9')
-
-    def insert0(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            return
-        self.entry.insert(tk.END, '0')
-
-    def insert00(self):
-        valid = self.is_number()
-        iszero = self.is_zero()
-        if not valid:
-            pass
-        if iszero:
-            return
-        self.entry.insert(tk.END, '00')
-
-# Awaiting Logic From isnumber Function
+    # Transforms entry value into a negative and back if pressed again
     def negate(self):
         valid = self.is_number()
         iszero = self.is_zero()
@@ -451,17 +222,20 @@ class Main(tk.Tk):
         self.delete()
         self.entry.insert(0, result)
 
+    # Inserts a decimal point if there is none yet returns if already present
     def insert_decimal(self):
         has_decimal = self.has_decimal()
         if has_decimal:
             return
         self.entry.insert(tk.END, '.')
 
+    # Deletes the last character on the entry
     def back(self):
         value_get = self.entry.get()
         length = len(value_get)
         self.entry.delete(length-1, 'end')
 
+    # Sets value 1 and operation then preceeds to wait for the second value
     def multiply(self):
         valid = self.is_number()
         if not valid:
@@ -470,6 +244,7 @@ class Main(tk.Tk):
         self.operation = 'multiplication'
         self.clear()
 
+    # Sets value 1 and operation then preceeds to wait for the second value
     def divide(self):
         valid = self.is_number()
         if not valid:
@@ -478,6 +253,7 @@ class Main(tk.Tk):
         self.operation = 'division'
         self.clear()
 
+    # Sets value 1 and operation then preceeds to wait for the second value
     def subtract(self):
         valid = self.is_number()
         if not valid:
@@ -486,6 +262,7 @@ class Main(tk.Tk):
         self.operation = 'subtraction'
         self.clear()
 
+    # Sets value 1 and operation then preceeds to wait for the second value
     def add(self):
         valid = self.is_number()
         if not valid:
@@ -494,11 +271,7 @@ class Main(tk.Tk):
         self.operation = 'addition'
         self.clear()
 
-    def var_type(self, number):
-        if number % 1 == 0:
-            return int(number)
-        return number
-
+    # Computes for the resulting value after accepting the second value for the operation
     def compute(self):
         result = 0
         valid = self.is_number()
@@ -507,7 +280,7 @@ class Main(tk.Tk):
         self.value2 = float(value_get)
         if not valid:
             self.delete()
-            self.entry.insert(tk.END, 'Err')
+            self.entry.insert(tk.END, 'Invalid Character')
             return
         if self.operation == 'multiplication':
             result = self.value1 * self.value2
